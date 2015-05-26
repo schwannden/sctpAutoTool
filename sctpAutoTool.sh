@@ -244,13 +244,20 @@ function Scp {
 # GetIP : get ssh IP and port          #
 ########################################
 function getIP {
-printf "Enter your Board IP(deault port is 22, change it by entering IP:port): "
+  printf "Enter your Board IP (deault port is 22, specify it by IP:port): "
   read BoardIP
   t=`echo $BoardIP | cut -d ":" -f2`
   if [ $t != $BoardIP ]
   then
     BoardIP=`echo $BoardIP | cut -d ":" -f1`
     port=$t
+  fi
+
+  printf "Enter username (default is root):"
+  read userName
+  if [ -z userName ]
+  then
+    userName='root'
   fi
 }
 
@@ -268,20 +275,20 @@ fi
 if [ $mode == configure ]
 then
   getIP
-  echo "copying lksctp..."
-  Scp -r lksctp-tools-1.0.16.tar.gz root@$BoardIP:$SCTPDIR
+  echo "copying lksctp to $userName@$BoardIP:$SCTPDIR..."
+  Scp -r lksctp-tools-1.0.16.tar.gz $userName@$BoardIP:$SCTPDIR
   echo "copying libsnp"
   Scp -r libsnp root@$BoardIP:$SCTPDIR
   echo "copying example"
   Scp -r sctp root@$BoardIP:$SCTPDIR
   echo "The following commands will be run:"
   echo $lksctpScript
-  echo $lksctpScript | xargs ssh -p $port root@$BoardIP 
+  echo $lksctpScript | xargs ssh -p $port $userName@$BoardIP 
   echo "The following commands will be run:"
   echo $libsnpScript
-  echo $libsnpScript | xargs ssh -p $port root@$BoardIP 
+  echo $libsnpScript | xargs ssh -p $port $userName@$BoardIP 
   echo "The following commands will be run:"
   echo $exampleScript
-  echo $exampleScript | xargs ssh -p $port root@$BoardIP 
+  echo $exampleScript | xargs ssh -p $port $userName@$BoardIP 
 fi
 
