@@ -24,31 +24,6 @@ EOF
 ########################################
 mode='configure'
 target='all'
-SCTPDIR='/home/root/sctp/'
-read -d '' lksctpScript <<- EOF
-source /etc/profile;
-cd $SCTPDIR;
-tar -xzvf lksctp-tools-1.0.16.tar.gz;
-cd lksctp-tools-1.0.16;
-./bootstrap;
-./configure;
-make;
-make install;
-EOF
-read -d '' libsnpScript <<- EOF
-source /etc/profile;
-cd $SCTPDIR;
-cd libsnp;
-make;
-make install;
-EOF
-read -d '' exampleScript <<- EOF
-source /etc/profile;
-cd $SCTPDIR;
-cd sctp;
-make;
-EOF
-
 lksctpURL='http://sourceforge.net/projects/lksctp/files/lksctp-tools/lksctp-tools-1.0.16.tar.gz'
 libsnpURL='https://github.com/schwannden/libsnp'
 exampleURL='https://github.com/schwannden/sctp'
@@ -72,6 +47,41 @@ function detectOS
     echo "un-recognized operating system"
     exit
   fi
+}
+
+########################################
+# make script based on target user     #
+########################################
+function makeScript
+{
+  SCTPDIR="/home/$userName/sctp/"
+  read -d '' initScript <<- EOF
+  'mkdir -p $SCTPDIR;
+  sudo apt-get install build-essential libtool automake;'
+EOF
+  read -d '' lksctpScript <<- EOF
+  'source /etc/profile;
+  cd $SCTPDIR;
+  tar -xzvf lksctp-tools-1.0.16.tar.gz;
+  cd lksctp-tools-1.0.16;
+  ./bootstrap;
+  ./configure;
+  make;
+  sudo make install;'
+EOF
+  read -d '' libsnpScript <<- EOF
+  'source /etc/profile;
+  cd $SCTPDIR;
+  cd libsnp;
+  make;
+  sudo make install;'
+EOF
+  read -d '' exampleScript <<- EOF
+  'source /etc/profile;
+  cd $SCTPDIR;
+  cd sctp;
+  make;'
+EOF
 }
 
 ########################################
@@ -275,20 +285,23 @@ fi
 if [ $mode == configure ]
 then
   getIP
+  makeScript
+  echo "The following commands will be run:"
+  echo $initScript
+  ssh -p $port -t $userName@$BoardIP bash -c "$initScript"
   echo "copying lksctp to $userName@$BoardIP:$SCTPDIR..."
-  Scp -r lksctp-tools-1.0.16.tar.gz $userName@$BoardIP:$SCTPDIR
   echo "copying libsnp"
-  Scp -r libsnp root@$BoardIP:$SCTPDIR
   echo "copying example"
-  Scp -r sctp root@$BoardIP:$SCTPDIR
+  Scp -r lksctp-tools-1.0.16.tar.gz libsnp sctp $userName@$BoardIP:$SCTPDIR
+  # Scp -r libsnp $userName@$BoardIP:$SCTPDIR
+  # Scp -r sctp $userName@$BoardIP:$SCTPDIR
   echo "The following commands will be run:"
   echo $lksctpScript
-  echo $lksctpScript | xargs ssh -p $port $userName@$BoardIP 
+  ssh -p $port -t $userName@$BoardIP bash -c "$lksctpScript"
   echo "The following commands will be run:"
   echo $libsnpScript
-  echo $libsnpScript | xargs ssh -p $port $userName@$BoardIP 
+  ssh -p $port -t $userName@$BoardIP bash -c "$libsnpScript"
   echo "The following commands will be run:"
   echo $exampleScript
-  echo $exampleScript | xargs ssh -p $port $userName@$BoardIP 
+  ssh -p $port -t $userName@$BoardIP bash -c "$exampleScript"
 fi
-

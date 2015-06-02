@@ -1,0 +1,4 @@
+*.bak
+libsnp
+sctp
+lksctp*
