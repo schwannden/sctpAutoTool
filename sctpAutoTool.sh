@@ -57,7 +57,13 @@ function makeScript
   SCTPDIR="/home/$userName/sctp/"
   read -d '' initScript <<- EOF
   'mkdir -p $SCTPDIR;
-  sudo apt-get install build-essential libtool automake;'
+  sudo=$(which sudo)
+  if [ -z sudo ];
+  then
+    sudo apt-get install build-essential libtool automake;
+  else
+    apt-get install build-essential libtool automake;
+  fi;'
 EOF
   read -d '' lksctpScript <<- EOF
   'source /etc/profile;
@@ -67,14 +73,26 @@ EOF
   ./bootstrap;
   ./configure;
   make;
-  sudo make install;'
+  sudo=$(which sudo)
+  if [ -z sudo ];
+  then
+    sudo make install;
+  else
+    make install;
+  fi;'
 EOF
   read -d '' libsnpScript <<- EOF
   'source /etc/profile;
   cd $SCTPDIR;
   cd libsnp;
   make;
-  sudo make install;'
+  sudo=$(which sudo)
+  if [ -z sudo ];
+  then
+    sudo make install;
+  else
+    make install;
+  fi;'
 EOF
   read -d '' exampleScript <<- EOF
   'source /etc/profile;
